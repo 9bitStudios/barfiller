@@ -978,7 +978,7 @@ HEADER
 ***************************************************/
 header .headerContainer {
   height: auto;
-  background: url(images/header-background.png);
+  background: #222;
   padding-top: 10px;
   color: #fff;
 }
