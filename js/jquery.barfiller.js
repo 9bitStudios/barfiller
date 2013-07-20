@@ -1,6 +1,6 @@
 /*
 * File: jquery.barfiller.js
-* Version: 1.0.0
+* Version: 1.0.1
 * Description: A plugin that fills bars with a percentage you set.
 * Author: 9bit Studios
 * Copyright 2012, 9bit Studios
@@ -14,95 +14,150 @@
     $.fn.barfiller = function (options) {
 
         var defaults = $.extend({
-			barColor: '#16b597',
-			tooltip: true,
-			duration: 1000,
-			animateOnResize: true
+	    barColor: '#16b597',
+	    tooltip: true,
+	    duration: 1000,
+	    animateOnResize: true
         }, options);
         
-		/******************************
-		Private Variables
-		*******************************/         
+	
+	/******************************
+	Private Variables
+	*******************************/         
         
         var object = $(this);
-		var settings = $.extend(defaults, options);
-		var barWidth = object.width();
-		var fill = object.find('.fill');
-		var toolTip = object.find('.tip');
-		var fillPercentage = fill.attr('data-percentage');
-		var resizeTimeout;
-		
-		/******************************
-		Public Methods
-		*******************************/         
+	var settings = $.extend(defaults, options);
+	var barWidth = object.width();
+	var fill = object.find('.fill');
+	var toolTip = object.find('.tip');
+	var fillPercentage = fill.attr('data-percentage');
+	var resizeTimeout;
+	var transitionSupport = false;
+	var transitionPrefix;
+	
+	/******************************
+	Public Methods
+	*******************************/         
         
         var methods = {
         	
-			init: function() {
-				return this.each(function () {
-					methods.appendHTML();
-					methods.setEventHandlers();
-					methods.initializeItems();
-				});
-			},
-			
-			/******************************
-			Append HTML
-			*******************************/			
-			
-			appendHTML: function() {
-				fill.css('background', settings.barColor);
-				
-				if(!settings.tooltip) {
-					toolTip.css('display', 'none');
-				}
-				toolTip.text(fillPercentage + '%');
-			},
-			
-			/******************************
-			Set Event Handlers
-			*******************************/
-			setEventHandlers: function() {
+	    init: function() {
+		return this.each(function () {
+		    
+		    if(methods.getTransitionSupport()) {
+			transitionSupport = true;
+			transitionPrefix = methods.getTransitionPrefix();
+		    }
+		    
+		    methods.appendHTML();
+		    methods.setEventHandlers();
+		    methods.initializeItems();
+		});
+	    },
 
-				if(settings.animateOnResize) {
-					$(window).on("resize", function(event){
-						clearTimeout(resizeTimeout);
-						resizeTimeout = setTimeout(function() { 
-							methods.refill(); 
-						}, 300);
-					});				
-				}
-			},				
+	    /******************************
+	    Append HTML
+	    *******************************/			
 
-			/******************************
-			Initialize
-			*******************************/			
+	    appendHTML: function() {
+		fill.css('background', settings.barColor);
+
+		if(!settings.tooltip) {
+		    toolTip.css('display', 'none');
+		}
+		toolTip.text(fillPercentage + '%');
+	    },
+		  
+
+	    /******************************
+	    Set Event Handlers
+	    *******************************/
+	    setEventHandlers: function() {
+		if(settings.animateOnResize) {
+		    $(window).on("resize", function(event){
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(function() { 
+			    methods.refill(); 
+			}, 300);
+		    });				
+		}
+	    },				
+
+	    /******************************
+	    Initialize
+	    *******************************/			
+
+	    initializeItems: function() {
+		var pctWidth = methods.calculateFill(fillPercentage);
+		object.find('.tipWrap').css({ display: 'inline' });
+
+		if(transitionSupport)
+		    methods.transitionFill(pctWidth);
+		else
+		    methods.animateFill(pctWidth);
+	    },
+
+	    getTransitionSupport: function() {
+	
+		var thisBody = document.body || document.documentElement,
+		thisStyle = thisBody.style;
+		var support = thisStyle.transition !== undefined || thisStyle.WebkitTransition !== undefined || thisStyle.MozTransition !== undefined || thisStyle.MsTransition !== undefined || thisStyle.OTransition !== undefined;
+		return support; 	
+	    },
+		    
+	    getTransitionPrefix: function() {
+		if(/mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase()))
+		    return '-moz-transition';
+		if(/webkit/.test(navigator.userAgent.toLowerCase()))
+		    return '-webkit-transition';
+		if(/opera/.test(navigator.userAgent.toLowerCase()))
+		    return '-o-transition';
+		if (/msie/.test(navigator.userAgent.toLowerCase()))
+		    return '-ms-transition';
+		else
+		    return 'transition';
+	    },
+
+	    getTransition: function(val, time, type) {
+	       
+		var CSSObj;
+		if(type === 'width')
+		    CSSObj = { width : val };
+		else if (type === 'left')
+		    CSSObj = { left: val };
+
+		time = time/1000;
+		CSSObj[transitionPrefix] = type+' '+time+'s ease-in-out';		    
+		return CSSObj;
+
+	    },				
+
+	    refill: function() {
+		fill.css('width', 0);
+		toolTip.css('left', 0);
+		barWidth = object.width();
+		methods.initializeItems();
+	    },
+
+	    calculateFill: function(percentage) {
+		percentage = percentage *  0.01;
+		var finalWidth = barWidth * percentage;
+		return finalWidth;
+	    },       
+
+	    transitionFill: function(barWidth) {
+
+		var toolTipOffset = barWidth - toolTip.width();
+		fill.css( methods.getTransition(barWidth, settings.duration, 'width'));
+		toolTip.css( methods.getTransition(toolTipOffset, settings.duration, 'left'));
+
+	    },	
+	    animateFill: function(barWidth) {
+		var toolTipOffset = barWidth - toolTip.width();
+		fill.stop().animate({width: '+=' + barWidth}, settings.duration);
+		toolTip.stop().animate({left: '+=' + toolTipOffset}, settings.duration);
+	    }
 			
-			initializeItems: function() {
-				var pctWidth = methods.calculateFill(fillPercentage);
-				methods.animateFill(pctWidth);
-			},			
-			
-			refill: function() {
-				fill.css('width', 0);
-				toolTip.css('left', 0);
-				barWidth = object.width();
-				methods.initializeItems();
-			},
-			
-			calculateFill: function(percentage) {
-				percentage = percentage *  0.01;
-				var finalWidth = barWidth * percentage;
-				return finalWidth;
-			},       
-			
-			animateFill: function(barWidth) {
-				var toolTipOffset = barWidth - toolTip.width();
-				fill.stop().animate({width: barWidth}, settings.duration);
-				toolTip.stop().animate({left: '+=' + toolTipOffset}, settings.duration);
-			}
-			
-		
         };
         
         if (methods[options]) { 	// $("#element").pluginName('methodName', 'arg1', 'arg2');
@@ -112,6 +167,6 @@
         } else {
             $.error( 'Method "' +  method + '" does not exist in barfiller plugin!');
         } 
-};
+    };
 
 })(jQuery);
