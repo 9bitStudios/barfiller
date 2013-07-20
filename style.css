@@ -1078,6 +1078,9 @@ BARFILLER
   background: #333;
   z-index: 1;
 }
+.barfiller .tipWrap {
+    display:none;
+}
 .barfiller .tip {
   margin-top: -30px;
   padding: 2px 4px;
