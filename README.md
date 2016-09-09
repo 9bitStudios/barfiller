@@ -32,7 +32,7 @@ Below are some options that you can pass in to Barfiller...
 
 | Option | Value | Default Value | Description | Example |
 | --- | --- | --- | --- | --- |
-barcolor | String (Hex value) | #16b597 | Sets the color of the animating fill bar | barcolor: "#990000"
+barColor | String (Hex value) | #16b597 | Sets the color of the animating fill bar | barColor: "#990000"
 tooltip | Boolean | true | Sets whether or not to show the tooltip above the animating bar | tooltip: false
 duration | Integer (in milliseconds) | 1000 | Sets the amount of time the fill animation takes in milliseconds | duration: 500
 animateOnResize | Boolean | true | Sets whether or not to redo the animation when the user resizes the window or switches device views | animateOnResize: false
